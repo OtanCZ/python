@@ -21,7 +21,8 @@ class App:
         # načtení obrázku
         self._image_surf = pygame.image.load("../resources/star.png").convert()
         pygame.time.set_timer(App.FRAME, 60)
- 
+
+
     def on_event(self, event):
         if event.type == QUIT:
             self._running = False
@@ -32,7 +33,8 @@ class App:
     def on_loop(self):
         pass
     def on_render(self):
-        self._display_surf.blit(self._image_surf,(self._star_position_x, self._star_position_y))
+        self._display_surf.fill((0, 0, 0))
+        self._display_surf.blit(self._image_surf, (self._star_position_x, self._star_position_y))
         pygame.display.flip()
         #pygame.display.update()
  

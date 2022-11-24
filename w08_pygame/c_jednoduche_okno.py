@@ -15,6 +15,10 @@ class App:
         self._running = True
  
     def on_event(self, event):
+        # aby se okno nedalo zavřít (úkol štemb moment)
+        pass
+        return
+
         if event.type == pygame.QUIT:
             self._running = False
     def on_loop(self):

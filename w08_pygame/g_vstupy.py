@@ -1,6 +1,14 @@
 import pygame
 from pygame.locals import *
- 
+
+class Bullet:
+    def __init__(self, image, velocity_x, velocity_y, position_x, position_y):
+        self.image = image
+        self.velocity_x = velocity_x
+        self.velocity_y = velocity_y
+        self.position_x = 0
+        self.position_y = 0
+
 class App:
     def __init__(self):
         self._running = True
@@ -8,17 +16,37 @@ class App:
         self._image_surf = None
         self.size = self.weight, self.height = 640, 400
         self._display_surf = None
+        self._clock = None
+        self._fps = 60
         self._star_position_x = 0
         self._star_position_y = 0
+        self._star_velocity_x = 0
+        self._star_velocity_y = 0
+        self._bullets = []
+        self._bullet_surf = None;
+        self._last_key = None
  
     def on_init(self):
         # inicializace PyGame modulů
         pygame.init()   
         # nastavení velikosti okna, pokus o nastavení HW akcelerace, pokud nelze, použije se DOUBLEBUF
         self._display_surf = pygame.display.set_mode(self.size, pygame.HWSURFACE | pygame.DOUBLEBUF)
+        self._bullet_surf = pygame.image.load("../resources/missile.png").convert()
         self._running = True
+        self._clock = pygame.time.Clock()
         # načtení obrázku
-        self._image_surf = pygame.image.load("../resources/star.png").convert()
+        self._image_surf = pygame.image.load("../resources/craft.png").convert()
+
+    def on_loop(self):
+        self._star_position_x += self._star_velocity_x
+        self._star_position_y += self._star_velocity_y
+
+        for bullet in self._bullets:
+            bullet.position_x += bullet.velocity_x
+            bullet.position_y += bullet.velocity_y
+
+        self._clock.tick(self._fps)
+
     def on_input_focus(self):
         pass
     def on_input_blur(self):
@@ -27,11 +55,40 @@ class App:
         print("key down...")
         print(event)
         if event.key == pygame.K_LEFT:
-            self._star_position_x -= 1
+            self._star_velocity_x = -2
+            self._last_key = pygame.K_LEFT
         if event.key == pygame.K_RIGHT:
-            self._star_position_x += 1
+            self._star_velocity_x = 2
+            self._last_key = pygame.K_RIGHT
+        if event.key == pygame.K_UP:
+            self._star_velocity_y = -2
+            self._last_key = pygame.K_UP
+        if event.key == pygame.K_DOWN:
+            self._star_velocity_y = 2
+            self._last_key = pygame.K_DOWN
+
+        if event.key == pygame.K_SPACE:
+            self.spawn_bullet()
+
+
+    def spawn_bullet(self):
+        if self._last_key == pygame.K_LEFT:
+            self._bullets.append(Bullet(self._bullet_surf, -10, 0, self._star_position_x, self._star_position_y))
+        if self._last_key == pygame.K_RIGHT:
+            self._bullets.append(Bullet(self._bullet_surf, 10, 0, self._star_position_x, self._star_position_y))
+        if self._last_key == pygame.K_UP:
+            self._bullets.append(Bullet(self._bullet_surf, 0, -10, self._star_position_x, self._star_position_y))
+        if self._last_key == pygame.K_DOWN:
+            self._bullets.append(Bullet(self._bullet_surf, 0, 10, self._star_position_x, self._star_position_y))
+
     def on_key_up(self, event):
-        pass
+        print("key up...")
+        print(event)
+        if event.key in (pygame.K_LEFT, pygame.K_RIGHT):
+            self._star_velocity_x = 0
+
+        if event.key in (pygame.K_UP, pygame.K_DOWN):
+            self._star_velocity_y = 0
     def on_mouse_focus(self):
         pass
     def on_mouse_blur(self):
@@ -130,11 +187,12 @@ class App:
                 else:
                     self.on_minimize()
 
-    def on_loop(self):
-        pass
     def on_render(self):
-            self._display_surf.blit(self._image_surf,(self._star_position_x, self._star_position_y))
-            pygame.display.flip()
+        self._display_surf.fill((0, 0, 0))
+        self._display_surf.blit(self._image_surf, (self._star_position_x, self._star_position_y))
+        for bullet in self._bullets:
+            self._display_surf.blit(bullet.image, (bullet.position_x, bullet.position_y))
+        pygame.display.flip()
     def on_cleanup(self):
         pygame.quit()
  
