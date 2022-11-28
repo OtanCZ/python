@@ -15,5 +15,5 @@
 # (width, height). Je-li nová šířka menší, než aktuální hodnota, je nutné
 # všechny barvy mimo nové hranice vymazat. Máli jeden z parametrů hodnotu None,
 # použije se stávající výška, resp. šířka. Na konci nezapomeňte vygenerovat
-# množinuself.__colors. Metoda vrátí logickou hodnotu signalizující, zda změny
+# množinu self.__colors. Metoda vrátí logickou hodnotu signalizující, zda změny
 # byly, či nebyly provedeny.

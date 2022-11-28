@@ -1,2 +1,2 @@
 # Modifikujte program bigdigits.py tak,
-# aby místo hvězdiček vypisoval danou odpovídající číslici
+# aby místo hvězdiček vypisoval danou odpovídající sčíslici

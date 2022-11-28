@@ -11,6 +11,7 @@ class App:
         # inicializace PyGame modulů
         pygame.init()   
         # nastavení velikosti okna, pokus o nastavení HW akcelerace, pokud nelze, použije se DOUBLEBUF
+        # pomocí metod self._display_surf.get_width() a self._display_surf.get_height() získáme rozměry
         self._display_surf = pygame.display.set_mode(self.size, pygame.HWSURFACE | pygame.DOUBLEBUF)
         self._running = True
  
