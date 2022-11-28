@@ -11,8 +11,8 @@ class App:
         self._clock = None
         self._star_position_x = 0
         self._star_position_y = 0
-        self._star_velocity_x = 5
-        self._star_velocity_y = 5
+        self._star_velocity_x = 2
+        self._star_velocity_y = 2
         self._fps = 60
  
     def on_init(self):
