@@ -1,4 +1,5 @@
 # inspirace: https://zetcode.com/javagames/snake/
+import os
 
 # Snake is an older classic video game. 
 # It was first created in late 70s. Later it was brought to PCs. In this game the player controls a snake. 
@@ -13,7 +14,7 @@
 import pygame
 from enum import Enum
 from pygame.locals import *
-from random import randrange
+from random import randrange, random
 import time
 
 class Movement(Enum):
@@ -26,7 +27,7 @@ class Level:
     def __init__(self, level, color, obstacles):
         self.level = level
         self.color = color
-        self.scoreGoal = level * 10
+        self.scoreGoal = level * 2
         self.obstacles = obstacles
 
     def init_level(self):
@@ -35,6 +36,7 @@ class Level:
     def draw(self, surface):
         for obstacle in self.obstacles:
             surface.blit(self._image_obstacle, obstacle)
+
 
 class Snake:
     # šířka hada
@@ -47,6 +49,7 @@ class Snake:
         # body = tělo hada, reprezentované seznamem bodů (n-tic) jednotlivých stavebních kamenů o šířce Snake.DOT_SIZE
         self._body = []
         self._speed = 5
+        self._level = Level(1, (0, 0, 0), [])
         # aktuální pohyb
         self._movement = Movement.RIGHT
         # pozice jablka
@@ -78,10 +81,29 @@ class Snake:
             head[1] -= Snake.DOT_SIZE
         if movement == Movement.DOWN:
             head[1] += Snake.DOT_SIZE
+        if head in self._level.obstacles:
+            self._running = False
+            self._body.insert(0, head)
+
         if head == self._apple_position:
             self._body = [head] + self._body
-            self._speed += self._speed/10
+            self._speed += self._speed/25
             self._respawn_apple()
+            if self.getScore() >= self._level.scoreGoal * self._level.level:
+                self._level.level += 1
+                self._level.color = (int(random()*255), int(random()*255), int(random()*255))
+                self._level.obstacles = []
+                self._level.init_level()
+                pygame.mixer.music.load("../resources/midi/" + os.listdir("../resources/midi/")[int(random()*len(os.listdir("../resources/midi/")))])
+                pygame.mixer.music.play(-1)
+                for i in range(int(random() * 3 * self._level.level)):
+                    while True:
+                        obsticle = [randrange(Snake.APPLE_MAX_POS)*Snake.DOT_SIZE,
+                                    randrange(Snake.APPLE_MAX_POS)*Snake.DOT_SIZE]
+                        print(obsticle)
+                        if obsticle not in self._body and obsticle not in self._level.obstacles and obsticle != self._apple_position:
+                            self._level.obstacles.append(obsticle)
+                            break
         else:
             self._body = [head] + self._body[:-1]
     def is_collided(self):
@@ -97,7 +119,7 @@ class Snake:
         while True:
             self._apple_position = [randrange(Snake.APPLE_MAX_POS)*Snake.DOT_SIZE,
                                     randrange(Snake.APPLE_MAX_POS)*Snake.DOT_SIZE]
-            if self._apple_position not in self._body:
+            if self._apple_position not in self._body and self._apple_position not in self._level.obstacles:
                 break
     
     def draw(self, surface):
@@ -123,10 +145,8 @@ class App:
     def __init__(self):
         # hra neskončena
         self._running = True 
-        self._display_surf = None
+        self._display_suf = None
         self._snake = Snake()
-        self._levels = [Level(1, (0, 0, 0), [[1, 2], [2, 4], [8, 100]]), Level(2, (100, 255, 7), [[1, 2], [2, 4], [3, 6]]), Level(3, (255, 0, 0), [[1, 2], [2, 4], [3, 6], [4, 8]])]
-        self._level = self._levels[0]
         self.size = self.width, self.height = App.B_WIDTH + App.A_WIDTH, App.B_HEIGHT
         self._clock = None
 
@@ -137,8 +157,13 @@ class App:
         self._image_obstacle = pygame.image.load("../resources/alien.png").convert()
         self._running = True
         self._clock = pygame.time.Clock()
+        pygame.mixer.music.load("../resources/midi/HesaPirate.mid")
+        pygame.mixer.music.play(-1)
+
     def on_input_focus(self):
         pass
+
+
     def on_key_down(self, event):
         if event.key == pygame.K_LEFT:
             self._snake.setMovement(Movement.LEFT)
@@ -156,7 +181,7 @@ class App:
             self.on_key_down(event)
     def game_over(self):
         pygame.font.init()
-        self._display_surf.fill((self._level.color))
+        self._display_surf.fill((self._snake._level.color))
         font = pygame.font.SysFont("Arial", 50)
         font2 = pygame.font.SysFont("Arial", 20)
         render = font.render("Game Over", 1, (255, 0, 0))
@@ -174,21 +199,21 @@ class App:
         self._snake.is_collided()
 
     def on_render(self):
-            self._display_surf.fill((self._level.color))
+            self._display_surf.fill(self._snake._level.color)
             self._snake.draw(self._display_surf)
-            self._level.draw(self._display_surf)
+            self._snake._level.draw(self._display_surf)
             self.render_score(self._display_surf)
             pygame.display.flip()
 
     def render_score(self, display):
         font = pygame.font.SysFont("Arial", 20)
         pygame.draw.line(display, (255, 255, 255), (self.B_WIDTH, 0), (self.B_WIDTH, self.B_HEIGHT))
+        render3 = font.render("Level: {}".format(self._snake._level.level), 1, (255, 255, 255))
+        display.blit(render3, (self.B_WIDTH + self.A_WIDTH / 2 - render3.get_width() / 2, self.B_WIDTH / 10 - render3.get_height() / 2 + 40))
         render = font.render("Score: {}".format(self._snake.getScore()), 1, (255, 255, 255))
         display.blit(render, (self.B_WIDTH + self.A_WIDTH/2 - render.get_width()/2, self.B_WIDTH/10 - render.get_height()/2))
-        render2 = font.render("Speed: {}".format(self._snake._speed), 1, (255, 255, 255))
+        render2 = font.render("Speed: {}".format(int(self._snake._speed)), 1, (255, 255, 255))
         display.blit(render2, (self.B_WIDTH + self.A_WIDTH/2 - render2.get_width()/2, self.B_WIDTH/10 - render2.get_height()/2 + 20))
-        render3 = font.render("Level: {}".format(self._level.level), 1, (255, 255, 255))
-        display.blit(render3, (self.B_WIDTH + self.A_WIDTH/2 - render3.get_width()/2, self.B_WIDTH/10 - render3.get_height()/2 + 40))
 
     def on_cleanup(self):
         pygame.quit()
@@ -196,7 +221,7 @@ class App:
     def on_execute(self):
         # had
         self._snake.init_snake()
-        self._level.init_level()
+        self._snake._level.init_level()
         # game loop
         while self._snake._running:
             # zpracování všech typů událostí
