@@ -157,7 +157,7 @@ class App:
         self._image_obstacle = pygame.image.load("../resources/alien.png").convert()
         self._running = True
         self._clock = pygame.time.Clock()
-        pygame.mixer.music.load("../resources/midi/HesaPirate.mid")
+        pygame.mixer.music.load("../resources/midi/Numb.mid")
         pygame.mixer.music.play(-1)
 
     def on_input_focus(self):
