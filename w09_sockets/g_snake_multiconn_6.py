@@ -36,19 +36,20 @@ class Snake:
     # délka překážky
     N_OBSTACLE_DOTS = 3
     # max pozice jablka v libovolné ose
-    APPLE_MAX_POS = 29
+    APPLE_MAX_POS = 89
     OBSTACLES =[
             [[10,10], [10,11], [10,12]],
             [[24,24], [25,24], [26,24]],
             [[13,12], [13,13], [13,14], [12,13], [14,13]]
         ]
 
-    def __init__(self, y_init, body_color):
+    def __init__(self, y_init, body_color, player_name = "Snake"):
         # unikátní id instance hada uuid4 <=> random 
         self._uuid = str(uuid.uuid4())
         # body = tělo hada, reprezentované seznamem bodů (n-tic) jednotlivých stavebních kamenů o šířce Snake.DOT_SIZE
         self._body = []
         # aktuální pohyb
+        self._name = player_name
         self._movement = Movement.RIGHT
         self._is_apple_consumed = False
         
@@ -122,8 +123,8 @@ class Game:
                 break
 
 class App:
-    B_WIDTH  = 300
-    B_HEIGHT = 300
+    B_WIDTH  = 900
+    B_HEIGHT = 900
 
     INITIAL_SPEED = 4
     SPEED_LEVEL_LIMIT = 10
@@ -257,7 +258,7 @@ class App:
         while True:
             for event in pygame.event.get():
                 if event.type == KEYDOWN and event.key == pygame.K_SPACE:
-                    App._game.on_cleanup()
+                    App.on_cleanup()
     @staticmethod
     def draw_score_screen():
         font = pygame.font.SysFont("Arial", 25 )
@@ -270,10 +271,23 @@ class App:
         render = font.render("Level: {}".format(App._game.level), 1, (0, 0, 255))
         App._display_surf.blit(render, (200, App._game.SCORE_SCREEN_HEIGHT/2 - render.get_height()/2))
     
+    #Dodělat!
+    @staticmethod
+    def draw_legend_screen():
+        y = 20
+        if(App._game):
+            for snake in App._game.snakes.values():
+                print(snake._name)
+                y += 20
+                font = pygame.font.SysFont("Arial", 20)
+                render = font.render(snake._name, 1, (snake._body_color))
+                App._display_surf.blit(render, (App.B_WIDTH - 100, y ))
+            
     @staticmethod    
     def on_render(snake):
         #App._display_surf.fill((0, 0, 0))
         App.draw_score_screen()
+        App.draw_legend_screen()
         App.snake_draw(snake, App._display_surf)
         pygame.draw.rect(App._display_surf, (255,0,0), pygame.Rect(
             0, Game.SCORE_SCREEN_HEIGHT, App.B_WIDTH, App.B_HEIGHT-Game.SCORE_SCREEN_HEIGHT), 10)
@@ -324,28 +338,28 @@ class App:
                     App.on_event(App.get_client_snake(), event)
                 App.on_loop(App.get_client_snake())
                 App.on_render(App.get_client_snake())
-            else:
-                for snake in App._game.snakes.values():   
-                    print(f"processing snake: position: {snake._body[0]}, length: {len(snake._body)}")
-                    #print(f"processing snake: {snake.uuid}")
-                    if snake.is_apple_consumed:
-                        App._game.respawn_apple()
-                        App._game.speed += 0.5
-                        if App._game.speed >= App.SPEED_LEVEL_LIMIT:
-                            App._game.level += 1
-                            App.play_music(App._game.level)
-                            App._game.speed = App.INITIAL_SPEED
-                    App.on_render(snake)
         else:
             App.game_over()
+        for snake in App._game.snakes.values():   
+            print(f"processing snake: position: {snake._body[0]}, length: {len(snake._body)}")
+            #print(f"processing snake: {snake.uuid}")
+            if snake.is_apple_consumed:
+                App._game.respawn_apple()
+                App._game.speed += 0.5
+                if App._game.speed >= App.SPEED_LEVEL_LIMIT:
+                    App._game.level += 1
+                    App.play_music(App._game.level)
+                    App._game.speed = App.INITIAL_SPEED
+            App.on_render(snake)
+
         if not App.is_server_mode() and not App.get_client_snake()._is_alive:
             App.game_over()
 
 class Network:
-    HOST_CLIENT = "127.0.0.1"  # Standard loopback interface address (localhost)
+    HOST_CLIENT = "192.168.5.132"  # Standard loopback interface address (localhost)
     HOST_SERVER = "0.0.0.0"
-    PORT = 65432  # Port to listen on (non-privileged ports are > 1023)
-    MAX_MESSAGE_LENGTH = 1024
+    PORT = 65434  # Port to listen on (non-privileged ports are > 1023)
+    MAX_MESSAGE_LENGTH = 20000
     sel = selectors.DefaultSelector()
 
     @staticmethod
@@ -381,7 +395,13 @@ class Network:
             # všechna data přenesena
             #else:
                 print(f"received:{data.inb}")
-                App.setSnake(pickle.loads(data.inb))
+                snake = pickle.loads(data.inb)
+                App.setSnake(snake)
+                if snake._is_alive:
+                    pass
+                else:
+                    App._game.snakes.popitem(snake)
+                    sock.close()
                 App.on_execute()
                 # odstranění z monitoringu selectů
                 #Network.sel.unregister(sock)
@@ -424,7 +444,7 @@ class Network:
                 App.setGame(pickle.loads(data.inb))
                 # v první iteraci vytvoříme hada
                 if createSnake:
-                    App.setSnake(Snake(60, (0,255,0)))
+                    App.setSnake(Snake(60, (100,55,0), 'Lojza'))
                 print(f" create:{createSnake} snakes:{App._game.snakes.keys()}")
                 print(f"delka pred:{len(App.get_client_snake()._body)}")
                 #pohneme s hadem
