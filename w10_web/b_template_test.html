@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Hello World!</h1>
+<p>Welcome to my first Django project!</p>
+{% if "bc" in "abcdef" %}
+  This appears since "bc" is a substring of "abcdef"
+{% endif %}
+
+
+{% for x, y in points %}
+    There is a point at {{ x }},{{ y }}
+{% endfor %}
+
+</body>
+</html> 
